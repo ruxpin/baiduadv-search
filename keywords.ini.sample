@@ -1,21 +1,27 @@
 ;第一行用于检验文件编码，便于在xp/win7下通用，请勿删除
+
+;keeywords字段内的为关键词，可自行依次增加，kn无限制，只接收'='号后的值
 [keywords]
-    k1=sample
-    k2=simple
-    k3=测试
+  k1=sample
+  k2=simple
+  k3=测试
 
+;general字段内为标准设置，其余搜索配置内缺失的配置信息将默认为general内的值，执行时先按general的配置运行一遍
+;然后再按其余搜索配置依次运行
 [general]
-    lm=
-    site=
-;rn为每页返回的结果数
-    rn=100
-;totalpn为搜索结果的总条数，必须为rn的倍数
-    totalpn=100
+  ;lm为限定要搜索的网页的时间，可选1/7/30/365，对应1天内/1周内/1月内/一年内，留空为不限
+  ;site为指定要搜索的网站地址
+  ;rn为每页返回的结果数
+  ;totalpn为搜索结果的总条数，必须为rn的倍数
+  ;interval为顺序加载网页时的时间间隔，单位为秒
+  ;debug值为0或1，为1时运行程序将显示浏览器窗口及更多信息便于调试
+  lm=
+  site=
+  rn=100
+  totalpn=100
+  interval=1
+  debug=1
 
-;可以定制不同的搜索配置对关键词进行搜索，如下为tianya这个搜索配置,没配置的项目将按照general配置里的相同项值执行
+;可以定制不同的搜索配置对关键词进行搜索，如下为tianya这个搜索配置,没配置的项将按照general配置里的相同项值执行
 [tianya]
-;lm为限定要搜索的网页的时间，可选1/7/30/365，对应1天内/1周内/1月内/一年内，留空为不限
-    lm=
-;site为指定要搜索的网站地址
-    site=www.tianya.cn
-    totalpn=100
+  site=www.tianya.cn
