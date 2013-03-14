@@ -4,7 +4,7 @@ Init:
 ruby baidu_grap.rb -c
 ruby baidu_grap.rb -i
 
-Than rename keywords.ini.sample to keywords.ini 
+将keywords.ini.sample重命名为keywords.ini 
 
 Run:
 ruby baidu_grap.rb
