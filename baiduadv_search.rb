@@ -73,10 +73,10 @@ class Graper
       set.each do |line|
         if url = (line.scan url_reg)[0]
           url.gsub!("href=","").gsub!("\"","").chomp!
-          title = line.gsub(/<.*?>/,"").chomp
+          title = line.gsub(/<.*?>/,"").gsub("\'",'').chomp
         end
         url_hash = url.sub(/^http:\/\/www.baidu.com\/link\?url=..../,"")
-        stm = db.prepare "select * from pages where url_hash=\'#{url_hash}\'and title=\'#{title}\'"
+        stm = db.prepare "select * from pages where url_hash=\'#{url_hash}\' and title=\'#{title}\'"
         found = false
         rs = stm.execute
         found = true if rs.next
@@ -89,7 +89,7 @@ class Graper
     end
     if !new_links.empty?
       File.open("new_pages.html","a") do |f|
-        f.puts '<p>【'+keyword+"】在\<"+profile+"\>设置的搜索结果如下："+'</p>'
+        f.puts '<p>【'+keyword+"】在 "+profile+" 设置的搜索结果如下："+'</p>'
         f.puts new_links
         f.puts '<p>----- ----- ----- ----- ----- -----</p>'
       end
