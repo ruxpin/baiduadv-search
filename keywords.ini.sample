@@ -1,0 +1,19 @@
+;第一行用于检验文件编码，便于在xp/win7下通用，请勿删除
+[keywords]
+    k1=sample
+    k2=simple
+    k3=测试
+
+[general]
+    lm=
+    site=
+;totalpn为搜索结果的总条数，必须为100的倍数
+    totalpn=100
+
+;可以定制不同的搜索配置对关键词进行搜索，如下为tianya这个搜索配置,没配置的项目将按照general配置里的相同项值执行
+[tianya]
+;lm为限定要搜索的网页的时间，可选1/7/30/365，对应1天内/1周内/1月内/一年内，留空为不限
+    lm=
+;site为指定要搜索的网站地址
+    site=www.tianya.cn
+    totalpn=100
