@@ -5,11 +5,11 @@ Init:
 运行
 ruby baiduadv_search.rb --create_db --init_db
 或者
-ruby baidu_grap.rb -c -i
+ruby baiduadv_search.rb.rb -c -i
 
 将keywords.ini.sample重命名为keywords.ini 
 
 Run:
-ruby baidu_grap.rb
+ruby baiduadv_search.rb
 
 运行结果保存在相同目录的new_pages.html里，直接用浏览器打开即可
