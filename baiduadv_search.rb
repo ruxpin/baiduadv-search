@@ -51,7 +51,6 @@ class Graper
       site="http://www.baidu.com/s?q1=#{keyword}&q2=&q3=&q4=&rn=#{v['rn']}&lm=#{v['lm']}&ct=0&ft=&q5=&q6=#{v['site']}&pn=#{pn}&tn=baiduadv"
       $HIDE_Browser =true
       browser = Watir::Browser.new
-      # browser = Watir::IE.new
       browser.goto site
       browser.html.each_line do |line|
         if line.scan(link_reg)[0]
@@ -126,7 +125,6 @@ begin
     opts.on('-c', '--create_db', "创建程序数据库，如要初始化数据库请用-i参数\n") do
       options[:create_db] = true
     end
-
     # Option 为name，带argument，用于将argument作为数值解析，留待备用
     # opts.on('-n NAME', '--name Name', 'Pass-in single name') do |value|
     #   options[:name] = value
@@ -141,8 +139,6 @@ rescue OptionParser::InvalidOption => e
   puts e
   exit 1
 end
-
-# puts options.inspect\
 
 if options[:create_db]
   begin
