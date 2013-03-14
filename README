@@ -1,8 +1,11 @@
 在ini配置文件中指定搜索关键词，在定制的搜索配置下搜索百度，并将取回的结果与数据库中的历史查询数据比对，只显示新的查询结果。
 
 Init:
-ruby baidu_grap.rb -c
-ruby baidu_grap.rb -i
+
+运行
+ruby baiduadv_search.rb --create_db --init_db
+或者
+ruby baidu_grap.rb -c -i
 
 将keywords.ini.sample重命名为keywords.ini 
 

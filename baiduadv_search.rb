@@ -148,12 +148,13 @@ if options[:create_db]
   begin
     db=SQLite3::Database.new "pagesHub.db"
     db.execute "create table if not exists pages(id INTEGER PRIMARY KEY autoincrement, url text, title text, url_hash text)"
+    puts "\n数据库创建完毕\n如已有数据库及数据，将不执行任何操作"
     rescue SQLite3::Exception => e
       puts "Exception occured"
       puts e
     ensure
       db.close if db
-      exit
+      exit unless options[:init_db]
   end
 end
 
@@ -161,6 +162,7 @@ if options[:init_db]
   begin
     db=SQLite3::Database.open "pagesHub.db"
     db.execute "delete from pages;"
+    puts "\n数据库初始化完毕"
     rescue SQLite3::Exception => e
       puts "Exception occured"
       puts e
