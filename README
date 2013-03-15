@@ -1,48 +1,29 @@
-## Baiduadv-search
-
 在ini配置文件中指定搜索关键词，定制不同的搜索配置，使用watir调用浏览器搜索百度，并将取回的结果与数据库中的历史查询数据比对，只显示新的查询结果
+具体ini配置项参看keyword.ini.sample
 
-具体ini配置项参看[keyword.ini.sample](https://github.com/ruxpin/baiduadv-search/blob/master/keywords.ini.sample)
-***
 初始化:
 
-[安装sqlite3运行环境](http://sqlite.org/download.html)
-
+安装sqlite3运行环境: http://sqlite.org/download.html
 安装以下gem:
+gem install watir
+gem install rchardet19
+gem install inifile
+gem install sqlite3
 
-`gem install watir`
-
-`gem install rchardet19`
-
-`gem install inifile`
-
-`gem install sqlite3`
-
-创建初始化数据库
-
-`ruby baiduadv_search.rb --create_db`
-
+运行
+ruby baiduadv_search.rb --create_db --init_db
 或
-
-`ruby baiduadv_search.rb.rb -c`
+ruby baiduadv_search.rb.rb -c -i
 
 将keywords.ini.sample重命名为keywords.ini
-
-_如果有报编码无法处理的错误可新建一个keywords.ini，将keywords.ini.sample内容复制过去再根据你的需要编辑后保存即可_
-***
+如果有报编码无法处理的错误可新建一个keywords.ini，将keywords.ini.sample内容复制过去再根据你的需要编辑后保存即可
 
 运行脚本:
 
-`ruby baiduadv_search.rb`
-
+ruby baiduadv_search.rb
 运行在调试模式以获得更多信息：
-
-`ruby baiduadv_search.rb --debug`
-
+ruby baiduadv_search.rb --debug
 或
+ruby baiduadv_search.rb -d
 
-`ruby baiduadv_search.rb -d`
-
-***
-
-任何问题可在twitter [@rux9](https://twitter.com/rux9) 或新浪微博 [@ruxpin](http://weibo.com/u/1725190590)
+任何问题可在新浪微博 @ruxpin 或 twitter @rux9
