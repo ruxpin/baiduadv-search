@@ -1,15 +1,20 @@
-在ini配置文件中指定搜索关键词，定制不同的搜索配置，使用watir调用浏览器搜索百度，并将取回的结果与数据库中的历史查询数据比对，只显示新的查询结果。
+在ini配置文件中指定搜索关键词，定制不同的搜索配置，使用watir调用浏览器搜索百度，并将取回的结果与数据库中的历史查询数据比对，只显示新的查询结果
+具体ini配置项参看keyword.ini.sample
 
-Init:
+初始化:
 
 运行
 ruby baiduadv_search.rb --create_db --init_db
-或者
+或
 ruby baiduadv_search.rb.rb -c -i
 
-将keywords.ini.sample重命名为keywords.ini 
+将keywords.ini.sample重命名为keywords.ini
+如果有报编码无法处理的错误可新建一个keywords.ini，将keywords.ini.sample内容复制过去再根据你的需要编辑后保存即可
 
-Run:
+运行脚本:
+
 ruby baiduadv_search.rb
-
-运行结果保存在相同目录的new_pages.html里，直接用浏览器打开即可
+运行在调试模式以获得更多信息：
+ruby baiduadv_search.rb --debug
+或
+ruby baiduadv_search.rb -d

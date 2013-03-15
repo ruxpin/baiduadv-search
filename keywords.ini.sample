@@ -14,13 +14,11 @@
   ;rn为每页返回的结果数
   ;totalpn为搜索结果的总条数，必须为rn的倍数
   ;interval为顺序加载网页时的时间间隔，单位为秒
-  ;debug值为0或1，为1时运行程序将显示浏览器窗口及更多信息便于调试
   lm=
   site=
   rn=100
   totalpn=100
   interval=1
-  debug=1
 
 ;可以定制不同的搜索配置对关键词进行搜索，如下为tianya这个搜索配置,没配置的项将按照general配置里的相同项值执行
 [tianya]
