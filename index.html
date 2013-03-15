@@ -1,42 +1,37 @@
-<!doctype html>
-<!-- The Time Machine GitHub pages theme was designed and developed by Jon Rohan, on Feb 7, 2012. -->
-<!-- Follow him for fun. http://twitter.com/jonrohan. Tail his code on http://github.com/jonrohan -->
+<!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 
-  <link rel="stylesheet" href="stylesheets/stylesheet.css" media="screen"/>
-  <link rel="stylesheet" href="stylesheets/pygment_trac.css"/>
-  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-  <script type="text/javascript" src="javascripts/script.js"></script>
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Baiduadv-search : 在ini配置文件中指定搜索关键词，在定制的搜索配置下搜索百度，并将取回的结果与数据库中的历史查询数据比对，只显示新的查询结果。" />
 
-  <title>Baiduadv-search</title>
-  <meta name="description" content="在ini配置文件中指定搜索关键词，在定制的搜索配置下搜索百度，并将取回的结果与数据库中的历史查询数据比对，只显示新的查询结果。">
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Baiduadv-search</title>
+  </head>
 
-</head>
+  <body>
 
-<body>
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/ruxpin/baiduadv-search">View on GitHub</a>
 
-  <div class="wrapper">
-    <header>
-      <h1 class="title">Baiduadv-search</h1>
-    </header>
-    <div id="container">
-      <p class="tagline">在ini配置文件中指定搜索关键词，在定制的搜索配置下搜索百度，并将取回的结果与数据库中的历史查询数据比对，只显示新的查询结果。</p>
-      <div id="main" role="main">
-        <div class="download-bar">
-        <div class="inner">
-          <a href="https://github.com/ruxpin/baiduadv-search/tarball/master" class="download-button tar"><span>Download</span></a>
-          <a href="https://github.com/ruxpin/baiduadv-search/zipball/master" class="download-button zip"><span>Download</span></a>
-          <a href="https://github.com/ruxpin/baiduadv-search" class="code">View Baiduadv-search on GitHub</a>
-        </div>
-        <span class="blc"></span><span class="trc"></span>
-        </div>
-        <article class="markdown-body">
-          <h2>Baiduadv-search</h2>
+          <h1 id="project_title">Baiduadv-search</h1>
+          <h2 id="project_tagline">在ini配置文件中指定搜索关键词，在定制的搜索配置下搜索百度，并将取回的结果与数据库中的历史查询数据比对，只显示新的查询结果。</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/ruxpin/baiduadv-search/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/ruxpin/baiduadv-search/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h2>Baiduadv-search</h2>
 
 <p>在ini配置文件中指定搜索关键词，定制不同的搜索配置，使用watir调用浏览器搜索百度，并将取回的结果与数据库中的历史查询数据比对，只显示新的查询结果</p>
 
@@ -44,9 +39,9 @@
 
 <hr><p>初始化:</p>
 
-<p>*<a href="http://sqlite.org/download.html">安装sqlite3运行环境</a></p>
+<p><a href="http://sqlite.org/download.html">安装sqlite3运行环境</a></p>
 
-<p>*安装以下gem:</p>
+<p>安装以下gem:</p>
 
 <p><code>gem install watir</code></p>
 
@@ -56,51 +51,43 @@
 
 <p><code>gem install sqlite3</code></p>
 
-<p>`
-*运行</p>
+<p>创建初始化数据库</p>
 
-<p><code>ruby baiduadv_search.rb --create_db --init_db</code></p>
+<p><code>ruby baiduadv_search.rb --create_db</code></p>
 
-<p>*或</p>
+<p>或</p>
 
-<p><code>ruby baiduadv_search.rb.rb -c -i</code></p>
+<p><code>ruby baiduadv_search.rb.rb -c</code></p>
 
-<p>*将keywords.ini.sample重命名为keywords.ini
-<em>如果有报编码无法处理的错误可新建一个keywords.ini，将keywords.ini.sample内容复制过去再根据你的需要编辑后保存即可</em></p>
+<p>将keywords.ini.sample重命名为keywords.ini</p>
+
+<p><em>如果有报编码无法处理的错误可新建一个keywords.ini，将keywords.ini.sample内容复制过去再根据你的需要编辑后保存即可</em></p>
 
 <hr><p>运行脚本:</p>
 
 <p><code>ruby baiduadv_search.rb</code></p>
 
-<p>*运行在调试模式以获得更多信息：</p>
+<p>运行在调试模式以获得更多信息：</p>
 
 <p><code>ruby baiduadv_search.rb --debug</code></p>
 
-<p>*或</p>
+<p>或</p>
 
 <p><code>ruby baiduadv_search.rb -d</code></p>
 
 <hr><p>任何问题可在twitter <a href="https://twitter.com/rux9">@rux9</a> 或新浪微博 <a href="http://weibo.com/u/1725190590">@ruxpin</a></p>
-        </article>
-      </div>
+      </section>
     </div>
-    <footer>
-      <div class="owner">
-      <p><a href="https://github.com/ruxpin" class="avatar"><img src="https://secure.gravatar.com/avatar/f4353e2dbeee172f2ea27d6ebe87eef6?s=30&amp;d=https://a248.e.akamai.net/assets.github.com%2Fimages%2Fgravatars%2Fgravatar-user-420.png" width="48" height="48"/></a> <a href="https://github.com/ruxpin">ruxpin</a> maintains <a href="https://github.com/ruxpin/baiduadv-search">Baiduadv-search</a></p>
 
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Baiduadv-search maintained by <a href="https://github.com/ruxpin">ruxpin</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
 
-      </div>
-      <div class="creds">
-        <small>This page generated using <a href="https://pages.github.com/">GitHub Pages</a><br/>theme by <a href="http://twitter.com/jonrohan/">Jon Rohan</a></small>
-      </div>
-    </footer>
-  </div>
-  <div class="current-section">
-    <a href="#top">Scroll to top</a>
-    <a href="https://github.com/ruxpin/baiduadv-search/tarball/master" class="tar">tar</a><a href="https://github.com/ruxpin/baiduadv-search/zipball/master" class="zip">zip</a><a href="" class="code">source code</a>
-    <p class="name"></p>
-  </div>
+    
 
-  
-</body>
+  </body>
 </html>
