@@ -42,6 +42,8 @@ class Graper
     initialize_browser
     write_html_meta
     put_separator
+    @link_reg = /<H3 class=t>.*?<\/H3>/
+    @url_reg = /href=\".*?\"/
     keyword_list.each do |keyword|
       options.each do |k,v|
         %w[rn site lm totalpn interval].each do |kn|
@@ -49,7 +51,7 @@ class Graper
         end
         puts "  profile_options如下：\n  #{v}" if @debug
         puts "  获取关键词【#{keyword}】在\<#{k}\>设置的前#{v['totalpn']}个搜索结果.."
-        grap_baidu_links(keyword, k, v)
+        grap_baidu_links(keyword, v)
         save_new_links_to_db(keyword,k)
       end
     end
@@ -62,21 +64,22 @@ class Graper
     end
   end
 
-  def grap_baidu_links(keyword,k,v)
-    pn = 0
+  def grap_baidu_links(keyword,v)
     @grap_links = []
-    link_reg = /<H3 class=t>.*?<\/H3>/
-    while pn < v['totalpn'].to_i
-      site = "http://www.baidu.com/s?q1=#{keyword}&q2=&q3=&q4=&rn=#{v['rn']}&lm=#{v['lm']}&ct=0&ft=&q5=&q6=#{v['site']}&pn=#{pn}&tn=baiduadv"
-      browser.goto site
-      browser.html.each_line do |line|
-        if line.scan(link_reg)[0]
-          @grap_links << line.scan(link_reg)
-        end
-      end
-      pn += v['rn'].to_i
-      sleep v['interval'].to_i
+    @base_url = "http://www.baidu.com/s?q1=#{keyword}&q2=&q3=&q4=&rn=#{v['rn']}&lm=#{v['lm']}&ct=0&ft=&q5=&q6=#{v['site']}&tn=baiduadv&pn="
+    search_links(0, v['rn'].to_i, v['totalpn'].to_i, v['interval'].to_i)
+  end
+
+  def search_links(pn, step, totalpn, interval)
+    return if pn >= totalpn
+    site = @base_url + pn.to_s
+    browser.goto site
+    browser.html.each_line do |line|
+      @grap_links << line.scan(@link_reg) if line.scan(@link_reg)[0]
     end
+    pn += step
+    sleep interval
+    search_links(pn, step, totalpn, interval)
   end
 
 #百度搜索每个结果的url都带有唯一的hash值，只需要将获得的hash值取出并与数据库已有的hash值比对即可知道是不是没出现过的新结果
@@ -84,12 +87,11 @@ class Graper
   def save_new_links_to_db(keyword,profile)
     new_links=[]
     puts "  在获取的搜索结果中查找新的内容.."
-    url_reg = /href=\".*?\"/
     begin
       db = SQLite3::Database.open "pagesHub.db"
       @grap_links.each do |set|
         set.each do |line|
-          if url = (line.scan url_reg)[0]
+          if url = (line.scan @url_reg)[0]
             url.gsub!("href=","").gsub!("\"","").chomp!
             title = line.gsub(/<.*?>/,"").gsub("\'",'').chomp
           end
