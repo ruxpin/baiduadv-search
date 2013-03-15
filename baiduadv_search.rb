@@ -23,20 +23,17 @@ class Graper
     options['general'].merge! ({'interval' => '1'}) unless options['general'].has_key?('interval')
     options['general'].merge! ({'rn' => '100'}) unless options['general'].has_key?('rn')
     options['general'].merge! ({'totalpn' => '100'}) unless options['general'].has_key?('totalpn')
-    if options['general'].has_key?('debug') &&  options['general']['debug'] == '1'
-      options['general'].merge! ({'debug' => true })
-    else
-      options['general'].merge! ({'debug' => false })
-    end
+    @debug = options.has_key?('debug') ? true : false
+    options.delete('debug')
     %w[lm site].each do |a|
       options['general'].merge! ({a => ''}) unless options['general'].has_key?(a)
     end
-    puts "\n  关键词如下： \n\n  #{keyword_list}\n\n  options如下：\n\n  #{options}" if options['general']['debug']
+    puts "\n  关键词如下： \n\n  #{keyword_list}\n\n  options如下：\n\n  #{options}" if @debug
   end
 
   def initialize_browser
     @browser = Watir::Browser.new
-    @browser.visible = false unless options['general']['debug']
+    @browser.visible = false unless @debug
   end
 
   def write_html_meta
@@ -56,6 +53,7 @@ class Graper
       end
     end
     browser.close
+    Watir::Browser.start ("file:///#{Dir.pwd}\\new_pages.html")
   end
 
   def fulfill_local_options(v)
@@ -105,7 +103,7 @@ class Graper
           found = true if rs.next
           stm.close
           unless found
-            puts "\nrun sql: insert into pages(url,title,url_hash) values(\'#{url}\',\'#{title}\',\'#{url_hash}\')" if options['general']['debug']
+            puts "\nrun sql: insert into pages(url,title,url_hash) values(\'#{url}\',\'#{title}\',\'#{url_hash}\')" if @debug
             db.execute "insert into pages(url,title,url_hash) values(\'#{url}\',\'#{title}\',\'#{url_hash}\')"
             new_links << line.gsub("H3","H5")
           end
@@ -115,7 +113,7 @@ class Graper
         File.open("new_pages.html","a") do |f|
           f.puts '<p>【'+keyword+"】在 "+profile+" 设置的新搜索结果如下："+'</p>'
           f.puts new_links
-          f.puts '<p>----- ----- ----- ----- ----- -----</p>'
+          f.puts '<p>----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----</p>'
         end
         puts "  有相关的新链接"+new_links.length.to_s+"条  "
       else
@@ -153,6 +151,11 @@ begin
     options[:create_db] = false
     opts.on('-c', '--create_db', "创建程序数据库，如要初始化数据库请用-i参数\n") do
       options[:create_db] = true
+    end
+
+    options[:debug] = false
+    opts.on('-d', '--debug', "在debug模式下运行\n") do
+      options[:debug] = true
     end
     # Option 为name，带argument，用于将argument作为数值解析，留待备用
     # opts.on('-n NAME', '--name Name', 'Pass-in single name') do |value|
@@ -211,6 +214,6 @@ main_keys.each do |ik|
     ini_options[ik].merge! ({k.encode("UTF-8", inifile_encoding) => v.encode("UTF-8", inifile_encoding)}) 
   end
 end
-
+ini_options['debug'] = true if options[:debug]
 geter = Graper.new ini_options
 geter.get_baidu
