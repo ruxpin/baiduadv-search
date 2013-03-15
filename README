@@ -3,7 +3,7 @@
 
 初始化:
 
-'安装sqlite3运行环境':http://sqlite.org/download.html
+安装sqlite3运行环境: http://sqlite.org/download.html
 安装以下gem:
 gem install watir
 gem install rchardet19
