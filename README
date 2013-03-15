@@ -3,6 +3,13 @@
 
 初始化:
 
+'安装sqlite3运行环境':http://sqlite.org/download.html
+安装以下gem:
+gem install watir
+gem install rchardet19
+gem install inifile
+gem install sqlite3
+
 运行
 ruby baiduadv_search.rb --create_db --init_db
 或
