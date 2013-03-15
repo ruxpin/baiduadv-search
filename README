@@ -18,3 +18,5 @@ ruby baiduadv_search.rb
 ruby baiduadv_search.rb --debug
 或
 ruby baiduadv_search.rb -d
+
+任何问题可在新浪微博 @ruxpin 或 twitter @rux9
