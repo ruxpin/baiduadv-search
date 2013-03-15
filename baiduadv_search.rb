@@ -100,9 +100,8 @@ class Graper
               title_md5 = Digest::MD5.hexdigest(line.gsub(/<.*?>/,"").gsub("\'",'').chomp)
               url_hash_md5 = Digest::MD5.hexdigest(url.gsub("href=","").gsub("\"","").chomp.sub(/^http:\/\/www.baidu.com\/link\?url=..../,""))
               stm = db.prepare "select * from pages where url_hash_md5=\'#{url_hash_md5}\' and title_md5=\'#{title_md5}\'"
-              found = false
               rs = stm.execute
-              found = true if rs.next
+              found = rs.next ? true : false
               stm.close
               unless found
                 puts "\nrun sql: insert into pages(title_md5,url_hash_md5) values(\'#{title_md5}\',\'#{url_hash_md5}\')" if debug
