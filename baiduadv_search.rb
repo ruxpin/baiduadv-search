@@ -6,10 +6,10 @@ require 'rchardet19'
 require 'watir'
 
 class Graper
-  attr_accessor :keyword_list, :options, :browser
+  attr_accessor :keyword_list, :options, :browser, :new_pages_temp
   
   def initialize(options={})
-    @keyword_list = []
+    @new_pages_temp, @keyword_list = [], []
     @options = options
     fulfill_options
     initialize_browser
@@ -37,9 +37,7 @@ class Graper
   end
 
   def write_html_meta
-    File.open("new_pages.html","w") do |f|
-      f.puts '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />'
-    end
+    new_pages_temp << '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />'
   end
 
   def get_baidu
@@ -53,7 +51,12 @@ class Graper
       end
     end
     browser.close
-    Watir::Browser.start ("file:///#{Dir.pwd}\\new_pages.html")
+    if new_pages_temp.length > 1
+      File.open('new_pages.html', "w") { |f| f.puts new_pages_temp  }
+      Watir::Browser.start ("file:///#{Dir.pwd}\\new_pages.html")
+    else
+      puts "  全部搜索执行完毕，没有新的页面 "
+    end
   end
 
   def fulfill_local_options(v)
@@ -85,11 +88,11 @@ class Graper
 #百度搜索每个结果的url都带有唯一的hash值，只需要将获得的hash值取出并与数据库已有的hash值比对即可知道是不是没出现过的新结果
 #新结果的url_hash和title将写入数据库中
   def save_new_links_to_db(keyword,profile)
+    new_links=[]
     puts "  在获取的搜索结果中查找新的内容.."
     url_reg = /href=\".*?\"/
     begin
       db = SQLite3::Database.open "pagesHub.db"
-      new_links=[]
       @grap_links.each do |set|
         set.each do |line|
           if url = (line.scan url_reg)[0]
@@ -110,11 +113,9 @@ class Graper
         end
       end
       if !new_links.empty?
-        File.open("new_pages.html","a") do |f|
-          f.puts '<p>【'+keyword+"】在 "+profile+" 设置的新搜索结果如下："+'</p>'
-          f.puts new_links
-          f.puts '<p>----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----</p>'
-        end
+        new_pages_temp << ('<p>【'+keyword+"】在 "+profile+" 设置的新搜索结果如下："+'</p>')
+        new_pages_temp << new_links
+        new_pages_temp << '<p>----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----</p>'
         puts "  有相关的新链接"+new_links.length.to_s+"条  "
       else
         puts "  没有新的链接 No news is good news "
