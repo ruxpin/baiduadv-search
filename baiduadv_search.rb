@@ -25,8 +25,8 @@ class Graper
     options['general'].merge! ({'totalpn' => '100'}) unless options['general'].has_key?('totalpn')
     @debug = options.has_key?('debug') ? true : false
     options.delete('debug')
-    %w[lm site].each do |a|
-      options['general'].merge! ({a => ''}) unless options['general'].has_key?(a)
+    %w[lm site].each do |kn|
+      options['general'].merge! ({kn => ''}) unless options['general'].has_key?(kn)
     end
     puts "\n  关键词如下： \n\n  #{keyword_list}\n\n  options如下：\n\n  #{options}" if @debug
   end
@@ -44,7 +44,10 @@ class Graper
     put_separator
     keyword_list.each do |keyword|
       options.each do |k,v|
-        v = fulfill_local_options(v)
+        %w[rn site lm totalpn interval].each do |kn|
+          v[kn] = options['general'][kn] unless v[kn]
+        end
+        puts "  profile_options如下：\n  #{v}" if @debug
         puts "  获取关键词【#{keyword}】在\<#{k}\>设置的前#{v['totalpn']}个搜索结果.."
         grap_baidu_links(keyword, k, v)
         save_new_links_to_db(keyword,k)
@@ -57,15 +60,6 @@ class Graper
     else
       puts "  全部搜索执行完毕，没有新的页面 "
     end
-  end
-
-  def fulfill_local_options(v)
-    v['rn'] = options['general']['rn'] unless v['rn']
-    v['site'] = options['general']['site'] unless v['site']
-    v['lm'] = options['general']['lm'] unless v['lm']
-    v['totalpn'] = options['general']['totalpn'] unless v['totalpn']
-    v['interval'] = options['general']['interval'] unless v['interval']
-    v
   end
 
   def grap_baidu_links(keyword,k,v)
