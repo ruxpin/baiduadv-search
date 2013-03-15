@@ -1,4 +1,5 @@
 # encoding: utf-8
+require 'digest/md5'
 require 'optparse'
 require 'sqlite3'
 require 'inifile'
@@ -58,8 +59,8 @@ class Graper
       end
       put_separator
     end
-    save_new_links_to_db
     browser.close
+    save_new_links_to_db
     if new_pages_temp.length > 1
       File.open('new_pages.html', "w") { |f| f.puts new_pages_temp  }
       Watir::Browser.start ("file:///#{Dir.pwd}\\new_pages.html")
@@ -85,8 +86,8 @@ class Graper
     search_links(pn, step, totalpn, interval, links)
   end
 
-#百度搜索每个结果的url都带有唯一的hash值，只需要将获得的hash值取出并与数据库已有的hash值比对即可知道是不是没出现过的新结果
-#新结果的url_hash和title将写入数据库中
+#百度搜索每个结果的url都带有唯一的hash值，只需要将获得的hash与title的md5值取出并与数据库已有的hash的md5值比对即可知道是不是没出现过的新结果
+#新结果的url_hash和title的md5值将写入数据库中，存为md5是为了减少字段长度，提升sql效率
   def save_new_links_to_db
     puts "  在获取的搜索结果中查找新的内容..\n\n"
     begin
@@ -95,20 +96,19 @@ class Graper
         profile_links.each do |profile, links|
           new_links=[]
           links.each do |line|
-            if url = (line.scan @url_reg)[0]
-              url.gsub!("href=","").gsub!("\"","").chomp!
-              title = line.gsub(/<.*?>/,"").gsub("\'",'').chomp
-            end
-            url_hash = url.sub(/^http:\/\/www.baidu.com\/link\?url=..../,"")
-            stm = db.prepare "select * from pages where url_hash=\'#{url_hash}\' and title=\'#{title}\'"
-            found = false
-            rs = stm.execute
-            found = true if rs.next
-            stm.close
-            unless found
-              puts "\nrun sql: insert into pages(url,title,url_hash) values(\'#{url}\',\'#{title}\',\'#{url_hash}\')" if debug
-              db.execute "insert into pages(url,title,url_hash) values(\'#{url}\',\'#{title}\',\'#{url_hash}\')"
-              new_links << line.gsub("H3","H5")
+            if url = line.scan(@url_reg)[0]
+              title_md5 = Digest::MD5.hexdigest(line.gsub(/<.*?>/,"").gsub("\'",'').chomp)
+              url_hash_md5 = Digest::MD5.hexdigest(url.gsub("href=","").gsub("\"","").chomp.sub(/^http:\/\/www.baidu.com\/link\?url=..../,""))
+              stm = db.prepare "select * from pages where url_hash_md5=\'#{url_hash_md5}\' and title_md5=\'#{title_md5}\'"
+              found = false
+              rs = stm.execute
+              found = true if rs.next
+              stm.close
+              unless found
+                puts "\nrun sql: insert into pages(title_md5,url_hash_md5) values(\'#{title_md5}\',\'#{url_hash_md5}\')" if debug
+                db.execute "insert into pages(title_md5,url_hash_md5) values(\'#{title_md5}\',\'#{url_hash_md5}\')"
+                new_links << line.gsub("H3","H5")
+              end
             end
           end
           if !new_links.empty?
@@ -123,10 +123,12 @@ class Graper
       end
       db.close if db
       put_separator
-    rescue
-      puts "\n  数据库操作异常，请加参数 -c -i 重置数据库或联系开发人员"
-      browser.close
+    rescue SQLite3::Exception => e
+      puts "Exception occured"
+      puts e
       exit
+    ensure
+      db.close if db
     end
   end
   
@@ -141,7 +143,7 @@ options = {}
 begin
   option_parser = OptionParser.new do |opts|
     # 这里是这个命令行工具的帮助信息
-    opts.banner = "   搜索信息更新工具，Created By Rux\n"
+    opts.banner = "   百度搜索信息更新工具，Created By Rux\n"
 
     # Option 为initdb，不带argument，用于将switch默认设置成true或false
     options[:init_db] = false
@@ -177,7 +179,7 @@ end
 if options[:create_db]
   begin
     db=SQLite3::Database.new "pagesHub.db"
-    db.execute "create table if not exists pages(id INTEGER PRIMARY KEY autoincrement, url text, title text, url_hash text)"
+    db.execute "create table if not exists pages(id INTEGER PRIMARY KEY autoincrement, title_md5 text, url_hash_md5 text)"
     puts "\n数据库创建完毕\n如已有数据库及数据，将不执行任何操作"
     rescue SQLite3::Exception => e
       puts "Exception occured"
