@@ -6,10 +6,11 @@ require 'rchardet19'
 require 'watir'
 
 class Graper
-  attr_accessor :keyword_list, :options, :browser, :new_pages_temp
+  attr_accessor :keyword_list, :options, :new_pages_temp
+  attr_reader :debug, :browser
   
   def initialize(options={})
-    @new_pages_temp, @keyword_list = [], []
+    @new_pages_temp, @keyword_list, @grap_links = [], [], {}
     @options = options
     fulfill_options
   end
@@ -26,12 +27,12 @@ class Graper
     %w[lm site].each do |kn|
       options['general'].merge! ({kn => ''}) unless options['general'].has_key?(kn)
     end
-    puts "\n  关键词如下： \n\n  #{keyword_list}\n\n  options如下：\n\n  #{options}" if @debug
+    puts "\n  关键词如下： \n\n  #{keyword_list}\n\n  options如下：\n\n  #{options}" if debug
   end
 
   def initialize_browser
     @browser = Watir::Browser.new
-    @browser.visible = false unless @debug
+    @browser.visible = false unless debug
   end
 
   def write_html_meta
@@ -45,16 +46,19 @@ class Graper
     @link_reg = /<H3 class=t>.*?<\/H3>/
     @url_reg = /href=\".*?\"/
     keyword_list.each do |keyword|
-      options.each do |k,v|
+      @grap_links[keyword] = {}
+      options.each do |profile, settings|
         %w[rn site lm totalpn interval].each do |kn|
-          v[kn] = options['general'][kn] unless v[kn]
+          settings[kn] = options['general'][kn] unless settings[kn]
         end
-        puts "  profile_options如下：\n  #{v}" if @debug
-        puts "  获取关键词【#{keyword}】在\<#{k}\>设置的前#{v['totalpn']}个搜索结果.."
-        grap_baidu_links(keyword, v)
-        save_new_links_to_db(keyword,k)
+        puts "  <#{profile}> options如下：\n\n  #{settings}\n" if debug
+        puts "  获取关键词【#{keyword}】在\<#{profile}\>设置的前#{settings['totalpn']}个搜索结果..\n"
+        grap_baidu_links(keyword, profile, settings)
+        puts "\n  抓取到的网页数量: #{@grap_links[keyword][profile].length}\n\n" if debug
       end
+      put_separator
     end
+    save_new_links_to_db
     browser.close
     if new_pages_temp.length > 1
       File.open('new_pages.html', "w") { |f| f.puts new_pages_temp  }
@@ -64,57 +68,58 @@ class Graper
     end
   end
 
-  def grap_baidu_links(keyword,v)
-    @grap_links = []
-    @base_url = "http://www.baidu.com/s?q1=#{keyword}&q2=&q3=&q4=&rn=#{v['rn']}&lm=#{v['lm']}&ct=0&ft=&q5=&q6=#{v['site']}&tn=baiduadv&pn="
-    search_links(0, v['rn'].to_i, v['totalpn'].to_i, v['interval'].to_i)
+  def grap_baidu_links(keyword, profile, settings)
+    @base_url = "http://www.baidu.com/s?q1=#{keyword}&q2=&q3=&q4=&rn=#{settings['rn']}&lm=#{settings['lm']}&ct=0&ft=&q5=&q6=#{settings['site']}&tn=baiduadv&pn="
+    @grap_links[keyword].merge!({ profile => search_links(0, settings['rn'].to_i, settings['totalpn'].to_i, settings['interval'].to_i, []) })
   end
 
-  def search_links(pn, step, totalpn, interval)
-    return if pn >= totalpn
+  def search_links(pn, step, totalpn, interval, links)
+    return links if pn >= totalpn
     site = @base_url + pn.to_s
     browser.goto site
     browser.html.each_line do |line|
-      @grap_links << line.scan(@link_reg) if line.scan(@link_reg)[0]
+      links += line.scan(@link_reg) if line.scan(@link_reg)[0]
     end
     pn += step
     sleep interval
-    search_links(pn, step, totalpn, interval)
+    search_links(pn, step, totalpn, interval, links)
   end
 
 #百度搜索每个结果的url都带有唯一的hash值，只需要将获得的hash值取出并与数据库已有的hash值比对即可知道是不是没出现过的新结果
 #新结果的url_hash和title将写入数据库中
-  def save_new_links_to_db(keyword,profile)
-    new_links=[]
-    puts "  在获取的搜索结果中查找新的内容.."
+  def save_new_links_to_db
+    puts "  在获取的搜索结果中查找新的内容..\n\n"
     begin
       db = SQLite3::Database.open "pagesHub.db"
-      @grap_links.each do |set|
-        set.each do |line|
-          if url = (line.scan @url_reg)[0]
-            url.gsub!("href=","").gsub!("\"","").chomp!
-            title = line.gsub(/<.*?>/,"").gsub("\'",'').chomp
+      @grap_links.each do |keyword, profile_links|
+        profile_links.each do |profile, links|
+          new_links=[]
+          links.each do |line|
+            if url = (line.scan @url_reg)[0]
+              url.gsub!("href=","").gsub!("\"","").chomp!
+              title = line.gsub(/<.*?>/,"").gsub("\'",'').chomp
+            end
+            url_hash = url.sub(/^http:\/\/www.baidu.com\/link\?url=..../,"")
+            stm = db.prepare "select * from pages where url_hash=\'#{url_hash}\' and title=\'#{title}\'"
+            found = false
+            rs = stm.execute
+            found = true if rs.next
+            stm.close
+            unless found
+              puts "\nrun sql: insert into pages(url,title,url_hash) values(\'#{url}\',\'#{title}\',\'#{url_hash}\')" if debug
+              db.execute "insert into pages(url,title,url_hash) values(\'#{url}\',\'#{title}\',\'#{url_hash}\')"
+              new_links << line.gsub("H3","H5")
+            end
           end
-          url_hash = url.sub(/^http:\/\/www.baidu.com\/link\?url=..../,"")
-          stm = db.prepare "select * from pages where url_hash=\'#{url_hash}\' and title=\'#{title}\'"
-          found = false
-          rs = stm.execute
-          found = true if rs.next
-          stm.close
-          unless found
-            puts "\nrun sql: insert into pages(url,title,url_hash) values(\'#{url}\',\'#{title}\',\'#{url_hash}\')" if @debug
-            db.execute "insert into pages(url,title,url_hash) values(\'#{url}\',\'#{title}\',\'#{url_hash}\')"
-            new_links << line.gsub("H3","H5")
+          if !new_links.empty?
+            new_pages_temp << ('<p>【'+keyword+"】在 "+profile+" 设置的新搜索结果如下（共#{new_links.length}）条："+'</p>')
+            new_pages_temp << new_links
+            new_pages_temp << '<p>----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----</p>'
+            puts "  【"+keyword+"】在 <"+profile+"> 有相关的新链接"+new_links.length.to_s+"条  \n\n"
+          else
+            puts "  没有【"+keyword+"】在 <"+profile+"> 上的新链接 \n\n"
           end
         end
-      end
-      if !new_links.empty?
-        new_pages_temp << ('<p>【'+keyword+"】在 "+profile+" 设置的新搜索结果如下："+'</p>')
-        new_pages_temp << new_links
-        new_pages_temp << '<p>----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----</p>'
-        puts "  有相关的新链接"+new_links.length.to_s+"条  "
-      else
-        puts "  没有新的链接 No news is good news "
       end
       db.close if db
       put_separator
