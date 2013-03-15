@@ -12,8 +12,6 @@ class Graper
     @new_pages_temp, @keyword_list = [], []
     @options = options
     fulfill_options
-    initialize_browser
-    write_html_meta
   end
 
   def fulfill_options
@@ -41,6 +39,8 @@ class Graper
   end
 
   def get_baidu
+    initialize_browser
+    write_html_meta
     put_separator
     keyword_list.each do |keyword|
       options.each do |k,v|
