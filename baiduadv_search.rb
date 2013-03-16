@@ -8,7 +8,7 @@ require 'watir'
 
 class Graper
   attr_accessor :keyword_list, :options, :new_pages_temp
-  attr_reader :debug, :browser
+  attr_reader :verbose, :browser
   
   def initialize(options={})
     @new_pages_temp, @keyword_list, @grap_links = [], [], {}
@@ -23,16 +23,16 @@ class Graper
     options['general'].merge! ({'interval' => '1'}) unless options['general'].has_key?('interval')
     options['general'].merge! ({'rn' => '100'}) unless options['general'].has_key?('rn')
     options['general'].merge! ({'totalpn' => '100'}) unless options['general'].has_key?('totalpn')
-    @debug = options.delete('debug') ? true :false
+    @verbose = options.delete('verbose') ? true :false
     %w[lm site].each do |kn|
       options['general'].merge! ({kn => ''}) unless options['general'].has_key?(kn)
     end
-    puts "\n  关键词如下： \n\n  #{keyword_list}\n\n  options如下：\n\n  #{options}" if debug
+    puts "\n  关键词如下： \n\n  #{keyword_list}\n\n  options如下：\n\n  #{options}" if verbose
   end
 
   def initialize_browser
     @browser = Watir::Browser.new
-    @browser.visible = false unless debug
+    @browser.visible = false unless verbose
   end
 
   def write_html_meta
@@ -51,10 +51,10 @@ class Graper
         %w[rn site lm totalpn interval].each do |kn|
           settings[kn] = options['general'][kn] unless settings[kn]
         end
-        puts "  <#{profile}> options如下：\n\n  #{settings}\n" if debug
-        puts "  获取关键词【#{keyword}】在\<#{profile}\>设置的前#{settings['totalpn']}个搜索结果..\n"
+        puts "  <#{profile}> options如下：\n\n  #{settings}\n" if verbose
+        puts "  获取关键词【#{keyword}】在 \<#{profile}\> 搜索设置的前#{settings['totalpn']}个搜索结果..\n"
         grap_baidu_links(keyword, profile, settings)
-        puts "\n  抓取到的网页数量: #{@grap_links[keyword][profile].length}\n\n" if debug
+        puts "\n  返回的搜索结果数量: #{@grap_links[keyword][profile].length}\n\n"
       end
       put_separator
     end
@@ -103,19 +103,19 @@ class Graper
               found = rs.next ? true : false
               stm.close
               unless found
-                puts "\nrun sql: insert into pages(title_md5,url_hash_md5) values(\'#{title_md5}\',\'#{url_hash_md5}\')" if debug
+                puts "\nrun sql: insert into pages(title_md5,url_hash_md5) values(\'#{title_md5}\',\'#{url_hash_md5}\')" if verbose
                 db.execute "insert into pages(title_md5,url_hash_md5) values(\'#{title_md5}\',\'#{url_hash_md5}\')"
                 new_links << line.gsub("H3","H5")
               end
             end
           end
           if !new_links.empty?
-            new_pages_temp << ('<p>【'+keyword+"】在 "+profile+" 设置的新搜索结果如下（共#{new_links.length}）条："+'</p>')
+            new_pages_temp << ('<p>【'+keyword+"】在 "+profile+" 搜索设置的新搜索结果如下（共#{new_links.length}）条："+'</p>')
             new_pages_temp << new_links
             new_pages_temp << '<p>----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----</p>'
-            puts "  【"+keyword+"】在 <"+profile+"> 有相关的新链接"+new_links.length.to_s+"条  \n\n"
+            puts "  【"+keyword+"】在 <"+profile+"> 的搜索设置有相关的新链接"+new_links.length.to_s+"条  \n\n"
           else
-            puts "  没有【"+keyword+"】在 <"+profile+"> 上的新链接 \n\n"
+            puts "  没有【"+keyword+"】在 <"+profile+"> 搜索设置的新链接 \n\n"
           end
         end
       end
@@ -155,9 +155,9 @@ begin
       options[:create_db] = true
     end
 
-    options[:debug] = false
-    opts.on('-d', '--debug', "在debug模式下运行\n") do
-      options[:debug] = true
+    options[:verbose] = false
+    opts.on('-v', '--verbose', "在verbose模式下运行\n") do
+      options[:verbose] = true
     end
     # Option 为name，带argument，用于将argument作为数值解析，留待备用
     # opts.on('-n NAME', '--name Name', 'Pass-in single name') do |value|
@@ -216,6 +216,6 @@ main_keys.each do |ik|
     ini_options[ik].merge! ({k.encode("UTF-8", inifile_encoding) => v.encode("UTF-8", inifile_encoding)}) 
   end
 end
-ini_options['debug'] = true if options[:debug]
+ini_options['verbose'] = true if options[:verbose]
 geter = Graper.new ini_options
 geter.get_baidu

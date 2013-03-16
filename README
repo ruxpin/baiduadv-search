@@ -21,9 +21,9 @@ ruby baiduadv_search.rb.rb -c -i
 运行脚本:
 
 ruby baiduadv_search.rb
-运行在调试模式以获得更多信息：
-ruby baiduadv_search.rb --debug
+运行在verbose模式以获得更多信息：
+ruby baiduadv_search.rb --verbose
 或
-ruby baiduadv_search.rb -d
+ruby baiduadv_search.rb -v
 
 任何问题可在新浪微博 @ruxpin 或 twitter @rux9
