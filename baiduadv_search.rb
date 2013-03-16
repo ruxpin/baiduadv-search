@@ -23,8 +23,7 @@ class Graper
     options['general'].merge! ({'interval' => '1'}) unless options['general'].has_key?('interval')
     options['general'].merge! ({'rn' => '100'}) unless options['general'].has_key?('rn')
     options['general'].merge! ({'totalpn' => '100'}) unless options['general'].has_key?('totalpn')
-    @debug = options.has_key?('debug') ? true : false
-    options.delete('debug')
+    @debug = options.delete('debug') ? true :false
     %w[lm site].each do |kn|
       options['general'].merge! ({kn => ''}) unless options['general'].has_key?(kn)
     end
