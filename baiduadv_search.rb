@@ -11,7 +11,7 @@ class Graper
   attr_reader :verbose, :browser, :new_pages_insert_sql
   
   def initialize(options={})
-    @new_pages_temp, @keyword_list, @new_pages_insert_sql, @grap_links = [], [], [], {}
+    @new_pages_temp, @keyword_list, @new_pages_insert_sql, @grap_pages = [], [], [], {}
     @options = options
     fulfill_options
   end
@@ -30,6 +30,14 @@ class Graper
     puts "\n  关键词如下： \n\n  #{keyword_list}\n\n  options如下：\n\n  #{options}" if verbose
   end
 
+  def get_baidu
+    initialize_browser
+    write_html_meta
+    grap_baidu_pages
+    check_new_pages
+    show_and_save_new_pages
+  end
+
   def initialize_browser
     @browser = Watir::Browser.new
     @browser.visible = false unless verbose
@@ -39,78 +47,74 @@ class Graper
     new_pages_temp << '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />'
   end
 
-  def get_baidu
-    initialize_browser
-    write_html_meta
+  def grap_baidu_pages
     put_separator
     @link_reg = /<H3 class=t>.*?<\/H3>/
     @url_reg = /href=\".*?\"/
     keyword_list.each do |keyword|
-      @grap_links[keyword] = {}
+      @grap_pages[keyword] = {}
       options.each do |profile, settings|
         %w[rn site lm totalpn interval].each do |kn|
           settings[kn] = options['general'][kn] unless settings[kn]
         end
         puts "  <#{profile}> options如下：\n\n  #{settings}\n" if verbose
         puts "  获取关键词【#{keyword}】在 \<#{profile}\> 搜索设置的前#{settings['totalpn']}个搜索结果..\n"
-        grap_baidu_links(keyword, profile, settings)
-        puts "\n  返回的搜索结果数量: #{@grap_links[keyword][profile].length}\n\n"
+        @base_url = "http://www.baidu.com/s?q1=#{keyword}&q2=&q3=&q4=&rn=#{settings['rn']}&lm=#{settings['lm']}&ct=0&ft=&q5=&q6=#{settings['site']}&tn=baiduadv&pn="
+        @grap_pages[keyword].merge!({ profile => get_pages(0, settings['rn'].to_i, settings['totalpn'].to_i, settings['interval'].to_i, []) })
+        puts "\n  返回的搜索结果数量: #{@grap_pages[keyword][profile].length}\n\n"
       end
       put_separator
     end
     browser.close
-    check_new_links
+  end
+
+  def get_pages(pn, step, totalpn, interval, pages)
+    return pages if pn >= totalpn
+    site = @base_url + pn.to_s
+    browser.goto site
+    browser.html.each_line do |line|
+      pages += line.scan(@link_reg) if line.scan(@link_reg)[0]
+    end
+    pn += step
+    sleep interval
+    get_pages(pn, step, totalpn, interval, pages)
+  end
+
+  def show_and_save_new_pages
     if new_pages_insert_sql.empty?
       puts "  全部搜索执行完毕，没有新的页面 "
     else
       File.open('new_pages.html', "w") { |f| f.puts new_pages_temp  }
       Watir::Browser.start ("file:///#{Dir.pwd}\\new_pages.html")
-      save_new_links_to_db
+      save_new_pages_to_db
     end
-  end
-
-  def grap_baidu_links(keyword, profile, settings)
-    @base_url = "http://www.baidu.com/s?q1=#{keyword}&q2=&q3=&q4=&rn=#{settings['rn']}&lm=#{settings['lm']}&ct=0&ft=&q5=&q6=#{settings['site']}&tn=baiduadv&pn="
-    @grap_links[keyword].merge!({ profile => search_links(0, settings['rn'].to_i, settings['totalpn'].to_i, settings['interval'].to_i, []) })
-  end
-
-  def search_links(pn, step, totalpn, interval, links)
-    return links if pn >= totalpn
-    site = @base_url + pn.to_s
-    browser.goto site
-    browser.html.each_line do |line|
-      links += line.scan(@link_reg) if line.scan(@link_reg)[0]
-    end
-    pn += step
-    sleep interval
-    search_links(pn, step, totalpn, interval, links)
   end
 
 #百度搜索每个结果的url都带有唯一的hash值，只需要将获得的hash与title的md5值取出并与数据库已有的hash的md5值比对即可知道是不是没出现过的新结果
 #新结果的url_hash和title的md5值将写入数据库中，存为md5是为了减少字段长度，提升sql效率
-  def check_new_links
+  def check_new_pages
     puts "  在获取的搜索结果中查找新的内容..\n\n"
     begin
       db = SQLite3::Database.open "pagesHub.db"
-      @grap_links.each do |keyword, profile_links|
-        profile_links.each do |profile, links|
-          new_links=[]
-          links.each do |line|
+      @grap_pages.each do |keyword, profile_pages|
+        profile_pages.each do |profile, pages|
+          new_pages=[]
+          pages.each do |line|
             if url = line.scan(@url_reg)[0]
               title_md5 = Digest::MD5.hexdigest(line.gsub(/<.*?>/,"").gsub("\'",'').chomp)
               url_hash_md5 = Digest::MD5.hexdigest(url.gsub("href=","").gsub("\"","").chomp.sub(/^http:\/\/www.baidu.com\/link\?url=..../,""))
               rs = db.execute "select * from pages where url_hash_md5=\'#{url_hash_md5}\' and title_md5=\'#{title_md5}\'"
               if rs.empty?
                 new_pages_insert_sql << "insert into pages(title_md5,url_hash_md5) values(\'#{title_md5}\',\'#{url_hash_md5}\')"
-                new_links << line.gsub("H3","H5")
+                new_pages << line.gsub("H3","H5")
               end
             end
           end
-          if !new_links.empty?
-            new_pages_temp << ('<p>【'+keyword+"】在 "+profile+" 搜索设置的新搜索结果如下（共#{new_links.length}）条："+'</p>')
-            new_pages_temp << new_links
+          if !new_pages.empty?
+            new_pages_temp << ('<p>【'+keyword+"】在 "+profile+" 搜索设置的新搜索结果如下（共#{new_pages.length}）条："+'</p>')
+            new_pages_temp << new_pages
             new_pages_temp << '<p>----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----</p>'
-            puts "  【"+keyword+"】在 <"+profile+"> 的搜索设置有相关的新链接"+new_links.length.to_s+"条  \n\n"
+            puts "  【"+keyword+"】在 <"+profile+"> 的搜索设置有相关的新链接"+new_pages.length.to_s+"条  \n\n"
           else
             puts "  没有【"+keyword+"】在 <"+profile+"> 搜索设置的新链接 \n\n"
           end
@@ -126,7 +130,7 @@ class Graper
   end
 
 
-  def save_new_links_to_db
+  def save_new_pages_to_db
     begin
       db = SQLite3::Database.open "pagesHub.db"
       db.execute "begin"
