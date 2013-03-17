@@ -65,7 +65,7 @@ class Graper
     else
       File.open('new_pages.html', "w") { |f| f.puts new_pages_temp  }
       Watir::Browser.start ("file:///#{Dir.pwd}\\new_pages.html")
-      save_new_links_to_db unless new_pages_insert_sql.empty?
+      save_new_links_to_db
     end
   end
 
