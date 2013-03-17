@@ -8,10 +8,10 @@ require 'watir'
 
 class Graper
   attr_accessor :keyword_list, :options, :new_pages_temp
-  attr_reader :verbose, :browser
+  attr_reader :verbose, :browser, :new_pages_insert_sql
   
   def initialize(options={})
-    @new_pages_temp, @keyword_list, @grap_links = [], [], {}
+    @new_pages_temp, @keyword_list, @new_pages_insert_sql, @grap_links = [], [], [], {}
     @options = options
     fulfill_options
   end
@@ -59,12 +59,13 @@ class Graper
       put_separator
     end
     browser.close
-    save_new_links_to_db
-    if new_pages_temp.length > 1
+    check_new_links
+    if new_pages_insert_sql.empty?
+      puts "  全部搜索执行完毕，没有新的页面 "
+    else
       File.open('new_pages.html', "w") { |f| f.puts new_pages_temp  }
       Watir::Browser.start ("file:///#{Dir.pwd}\\new_pages.html")
-    else
-      puts "  全部搜索执行完毕，没有新的页面 "
+      save_new_links_to_db unless new_pages_insert_sql.empty?
     end
   end
 
@@ -87,7 +88,7 @@ class Graper
 
 #百度搜索每个结果的url都带有唯一的hash值，只需要将获得的hash与title的md5值取出并与数据库已有的hash的md5值比对即可知道是不是没出现过的新结果
 #新结果的url_hash和title的md5值将写入数据库中，存为md5是为了减少字段长度，提升sql效率
-  def save_new_links_to_db
+  def check_new_links
     puts "  在获取的搜索结果中查找新的内容..\n\n"
     begin
       db = SQLite3::Database.open "pagesHub.db"
@@ -98,13 +99,9 @@ class Graper
             if url = line.scan(@url_reg)[0]
               title_md5 = Digest::MD5.hexdigest(line.gsub(/<.*?>/,"").gsub("\'",'').chomp)
               url_hash_md5 = Digest::MD5.hexdigest(url.gsub("href=","").gsub("\"","").chomp.sub(/^http:\/\/www.baidu.com\/link\?url=..../,""))
-              stm = db.prepare "select * from pages where url_hash_md5=\'#{url_hash_md5}\' and title_md5=\'#{title_md5}\'"
-              rs = stm.execute
-              found = rs.next ? true : false
-              stm.close
-              unless found
-                puts "\nrun sql: insert into pages(title_md5,url_hash_md5) values(\'#{title_md5}\',\'#{url_hash_md5}\')" if verbose
-                db.execute "insert into pages(title_md5,url_hash_md5) values(\'#{title_md5}\',\'#{url_hash_md5}\')"
+              rs = db.execute "select * from pages where url_hash_md5=\'#{url_hash_md5}\' and title_md5=\'#{title_md5}\'"
+              if rs.empty?
+                new_pages_insert_sql << "insert into pages(title_md5,url_hash_md5) values(\'#{title_md5}\',\'#{url_hash_md5}\')"
                 new_links << line.gsub("H3","H5")
               end
             end
@@ -119,10 +116,27 @@ class Graper
           end
         end
       end
-      db.close if db
-      put_separator
+      put_separator      
     rescue SQLite3::Exception => e
-      puts "Exception occured"
+      puts e
+      exit
+    ensure
+      db.close if db
+    end
+  end
+
+
+  def save_new_links_to_db
+    begin
+      db = SQLite3::Database.open "pagesHub.db"
+      db.execute "begin"
+      new_pages_insert_sql.each do |insert_sql|
+        puts "\nrun sql: #{insert_sql}" if verbose
+        db.execute insert_sql
+      end
+      db.execute "commit"
+      puts "已将此次找到的#{new_pages_insert_sql.length}条结果记入数据库"
+    rescue SQLite3::Exception => e
       puts e
       exit
     ensure
